@@ -5,7 +5,7 @@ Created on May 17, 2016
 """
 
 
-from agent import Agent
+from .agent import Agent
 
 class AgentCmd(Agent):
     
@@ -15,8 +15,8 @@ class AgentCmd(Agent):
         self.movie_dict = movie_dict
         self.act_set = act_set
         self.slot_set = slot_set
-        self.act_cardinality = len(act_set.keys())
-        self.slot_cardinality = len(slot_set.keys())
+        self.act_cardinality = len(list(act_set.keys()))
+        self.slot_cardinality = len(list(slot_set.keys()))
         
         self.agent_run_mode = params['agent_run_mode']
         self.agent_act_level = params['agent_act_level']
@@ -28,15 +28,15 @@ class AgentCmd(Agent):
 
         user_action = state['user_action']
         # get input from the command line
-        print "Turn", user_action['turn'] + 1, "sys:",
-        command = raw_input()
+        print("Turn", user_action['turn'] + 1, "sys:", end=' ')
+        command = input()
         
         if self.agent_input_mode == 0: # nl
             act_slot_value_response = self.generate_diaact_from_nl(command)
         elif self.agent_input_mode == 1: # dia_act
             act_slot_value_response = self.parse_str_to_diaact(command)
             
-        print 'user input', act_slot_value_response
+        print('user input', act_slot_value_response)
         
         return {"act_slot_response": act_slot_value_response, "act_slot_value_response": act_slot_value_response}
     
@@ -103,7 +103,7 @@ class AgentCmd(Agent):
                         for annot_val_ele in annot_val_arr:
                             act_slot_value_response['inform_slots'][annot_slot].append(annot_val_ele)
                 else: # single choice
-                    if annot_slot in self.slot_set.keys():
+                    if annot_slot in list(self.slot_set.keys()):
                         if annot_val == 'UNK':
                             act_slot_value_response['request_slots'][annot_slot] = 'UNK'
                         else:

@@ -52,7 +52,7 @@ class lstm_decoder_tanh(decoder):
         Cellin = np.zeros((n, d))
         Cellout = np.zeros((n, d))
     
-        for t in xrange(n):
+        for t in range(n):
             prev = np.zeros(d) if t==0 else Hout[t-1]
             Hin[t,0] = 1 # bias
             Hin[t, 1:1+xd] = Ws[t]
@@ -343,7 +343,7 @@ class lstm_decoder_tanh(decoder):
         
         dDsh = np.zeros(Dsh.shape)
         
-        for t in reversed(xrange(n)):
+        for t in reversed(range(n)):
             dIFOGf[t,2*d:3*d] = Cellout[t] * dHout[t]
             dCellout[t] = IFOGf[t,2*d:3*d] * dHout[t]
             
@@ -394,11 +394,11 @@ class lstm_decoder_tanh(decoder):
             word_vecs = np.zeros((len(word_arr), self.model['Wxh'].shape[0]))
             labels = [0] * (len(word_arr)-1)
             for w_index, w in enumerate(word_arr[:-1]):
-                if w in ds.data['word_dict'].keys():
+                if w in list(ds.data['word_dict'].keys()):
                     w_dict_index = ds.data['word_dict'][w]
                     word_vecs[w_index][w_dict_index] = 1
                 
-                if word_arr[w_index+1] in ds.data['word_dict'].keys():
+                if word_arr[w_index+1] in list(ds.data['word_dict'].keys()):
                     labels[w_index] = ds.data['word_dict'][word_arr[w_index+1]] 
             
             batch_rep['diaact'] = vec

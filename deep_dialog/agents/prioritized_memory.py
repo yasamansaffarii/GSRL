@@ -1,6 +1,6 @@
 import random
 import numpy as np
-from sum_tree import SumTree
+from .sum_tree import SumTree
 
 class Memory:  # stored as ( s, a, r, s_ ) in SumTree
     e = 1e-10

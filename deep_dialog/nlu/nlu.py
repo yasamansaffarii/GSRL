@@ -4,12 +4,12 @@ Created on Jul 13, 2016
 @author: xiul
 '''
 
-import cPickle as pickle
+import pickle as pickle
 import copy
 import numpy as np
 
-from lstm import lstm
-from bi_lstm import biLSTM
+from .lstm import lstm
+from .bi_lstm import biLSTM
 
 
 class nlu:
@@ -31,7 +31,7 @@ class nlu:
             if np.all(np.isnan(probs)): probs = np.zeros(probs.shape)
             
             # special handling with intent label
-            for tag_id in self.inverse_tag_dict.keys():
+            for tag_id in list(self.inverse_tag_dict.keys()):
                 if self.inverse_tag_dict[tag_id].startswith('B-') or self.inverse_tag_dict[tag_id].startswith('I-') or self.inverse_tag_dict[tag_id] == 'O':
                     probs[-1][tag_id] = 0
             
@@ -48,9 +48,9 @@ class nlu:
         """ load the trained NLU model """  
         import sys
         if 'win' in sys.platform:
-            model_params = pickle.load(open(model_path, 'r'))
+            model_params = pickle.load(open(model_path, 'r'), encoding='latin1')
         else:
-            model_params = pickle.load(open(model_path, 'rb'))
+            model_params = pickle.load(open(model_path, 'rb'), encoding='latin1')
 
     
         hidden_size = model_params['model']['Wd'].shape[0]
@@ -71,7 +71,7 @@ class nlu:
         self.act_dict = copy.deepcopy(model_params['act_dict'])
         self.tag_set = copy.deepcopy(model_params['tag_set'])
         self.params = copy.deepcopy(model_params['params'])
-        self.inverse_tag_dict = {self.tag_set[k]:k for k in self.tag_set.keys()}
+        self.inverse_tag_dict = {self.tag_set[k]:k for k in list(self.tag_set.keys())}
         
            
     def parse_str_to_vector(self, string):
@@ -83,7 +83,7 @@ class nlu:
         vecs = np.zeros((len(words), len(self.word_dict)))
         for w_index, w in enumerate(words):
             if w.endswith(',') or w.endswith('?'): w = w[0:-1]
-            if w in self.word_dict.keys():
+            if w in list(self.word_dict.keys()):
                 vecs[w_index][self.word_dict[w]] = 1
             else: vecs[w_index][self.word_dict['unk']] = 1
         
@@ -151,7 +151,7 @@ class nlu:
         diaact['inform_slots'] = slot_val_dict
          
         # add rule here
-        for slot in diaact['inform_slots'].keys():
+        for slot in list(diaact['inform_slots'].keys()):
             slot_val = diaact['inform_slots'][slot]
             if slot_val.startswith('bos'): 
                 slot_val = slot_val.replace('bos', '', 1)
@@ -164,8 +164,8 @@ class nlu:
         """ refine the dia_act by rules """
         
         # rule for taskcomplete
-        if 'request_slots' in diaact.keys():
-            if 'taskcomplete' in diaact['request_slots'].keys():
+        if 'request_slots' in list(diaact.keys()):
+            if 'taskcomplete' in list(diaact['request_slots'].keys()):
                 del diaact['request_slots']['taskcomplete']
                 diaact['inform_slots']['taskcomplete'] = 'PLACEHOLDER'
         
@@ -183,10 +183,10 @@ class nlu:
         
         penny_str = ""
         penny_str = dia_act['diaact'] + "("
-        for slot in dia_act['request_slots'].keys():
+        for slot in list(dia_act['request_slots'].keys()):
             penny_str += slot + ";"
     
-        for slot in dia_act['inform_slots'].keys():
+        for slot in list(dia_act['inform_slots'].keys()):
             slot_val_str = slot + "="
             if len(dia_act['inform_slots'][slot]) == 1:
                 slot_val_str += dia_act['inform_slots'][slot][0]

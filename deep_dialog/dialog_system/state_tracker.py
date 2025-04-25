@@ -134,13 +134,13 @@ class StateTracker:
             ####################################################################
             #   This code should execute regardless of which kind of agent produced action
             ####################################################################
-            for slot in agent_action_values['inform_slots'].keys():
+            for slot in list(agent_action_values['inform_slots'].keys()):
                 self.current_slots['proposed_slots'][slot] = agent_action_values['inform_slots'][slot]
                 self.current_slots['inform_slots'][slot] = agent_action_values['inform_slots'][slot] # add into inform_slots
-                if slot in self.current_slots['request_slots'].keys():
+                if slot in list(self.current_slots['request_slots'].keys()):
                     del self.current_slots['request_slots'][slot]
 
-            for slot in agent_action_values['request_slots'].keys():
+            for slot in list(agent_action_values['request_slots'].keys()):
                 if slot not in self.current_slots['agent_request_slots']:
                     self.current_slots['agent_request_slots'][slot] = "UNK"
 
@@ -156,12 +156,12 @@ class StateTracker:
             ####################################################################
             #   Update the current slots
             ####################################################################
-            for slot in user_action['inform_slots'].keys():
+            for slot in list(user_action['inform_slots'].keys()):
                 self.current_slots['inform_slots'][slot] = user_action['inform_slots'][slot]
-                if slot in self.current_slots['request_slots'].keys():
+                if slot in list(self.current_slots['request_slots'].keys()):
                     del self.current_slots['request_slots'][slot]
 
-            for slot in user_action['request_slots'].keys():
+            for slot in list(user_action['request_slots'].keys()):
                 if slot not in self.current_slots['request_slots']:
                     self.current_slots['request_slots'][slot] = "UNK"
             

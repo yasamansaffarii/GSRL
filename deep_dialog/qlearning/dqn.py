@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 
-from network import Network, DuelNetwork
+from .network import Network, DuelNetwork
 
 use_cuda = torch.cuda.is_available()
 
@@ -133,8 +133,8 @@ class DQN(nn.Module):
 
     def save_model(self, model_path):
         torch.save(self.model.state_dict(), model_path)
-        print "model saved."
+        print("model saved.")
 
     def load_model(self, model_path):
         self.model.load_state_dict(torch.load(model_path))
-        print "model loaded."
+        print("model loaded.")

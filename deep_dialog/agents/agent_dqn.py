@@ -15,14 +15,14 @@ Command: python .\run.py --agt 9 --usr 1 --max_turn 40 --movie_kb_path .\deep_di
 
 
 import random, copy, json
-import cPickle as pickle
+import pickle as pickle
 import numpy as np
 import torch
 from collections import deque
 
 from deep_dialog import dialog_config
 
-from agent import Agent
+from .agent import Agent
 from deep_dialog.qlearning import DQN, DistributionalDQN
 from .prioritized_memory import *
 
@@ -32,8 +32,8 @@ class AgentDQN(Agent):
         self.movie_dict = movie_dict
         self.act_set = act_set
         self.slot_set = slot_set
-        self.act_cardinality = len(act_set.keys())
-        self.slot_cardinality = len(slot_set.keys())
+        self.act_cardinality = len(list(act_set.keys()))
+        self.slot_cardinality = len(list(slot_set.keys()))
         
         self.feasible_actions = dialog_config.feasible_actions
         self.num_actions = len(self.feasible_actions)
@@ -132,14 +132,14 @@ class AgentDQN(Agent):
         #     Create bag of inform slots representation to represent the current user action
         ########################################################################
         user_inform_slots_rep = np.zeros((1, self.slot_cardinality))
-        for slot in user_action['inform_slots'].keys():
+        for slot in list(user_action['inform_slots'].keys()):
             user_inform_slots_rep[0,self.slot_set[slot]] = 1.0
 
         ########################################################################
         #   Create bag of request slots representation to represent the current user action
         ########################################################################
         user_request_slots_rep = np.zeros((1, self.slot_cardinality))
-        for slot in user_action['request_slots'].keys():
+        for slot in list(user_action['request_slots'].keys()):
             user_request_slots_rep[0, self.slot_set[slot]] = 1.0
 
         ########################################################################
@@ -161,7 +161,7 @@ class AgentDQN(Agent):
         ########################################################################
         agent_inform_slots_rep = np.zeros((1, self.slot_cardinality))
         if agent_last:
-            for slot in agent_last['inform_slots'].keys():
+            for slot in list(agent_last['inform_slots'].keys()):
                 agent_inform_slots_rep[0,self.slot_set[slot]] = 1.0
 
         ########################################################################
@@ -169,7 +169,7 @@ class AgentDQN(Agent):
         ########################################################################
         agent_request_slots_rep = np.zeros((1, self.slot_cardinality))
         if agent_last:
-            for slot in agent_last['request_slots'].keys():
+            for slot in list(agent_last['request_slots'].keys()):
                 agent_request_slots_rep[0,self.slot_set[slot]] = 1.0
         
         turn_rep = np.zeros((1,1)) + state['turn'] / 10.
@@ -271,7 +271,7 @@ class AgentDQN(Agent):
         for (i, action) in enumerate(self.feasible_actions):
             if act_slot_response == action:
                 return i
-        print act_slot_response
+        print(act_slot_response)
         raise Exception("action index not found")
         return None
     
@@ -306,7 +306,7 @@ class AgentDQN(Agent):
             if isinstance(self.experience_replay_pool, Memory):
                 batch, idx, _ = self.experience_replay_pool.sample(batch_size)
             else:
-                batch = [random.choice(self.experience_replay_pool) for i in xrange(batch_size)]
+                batch = [random.choice(self.experience_replay_pool) for i in range(batch_size)]
             batch_struct = self.dqn.singleBatch(batch, {'gamma': self.gamma})
             self.cur_bellman_err += batch_struct['cost']['total_cost']
             intrinsic_reward += batch_struct['intrinsic_reward']
@@ -315,7 +315,7 @@ class AgentDQN(Agent):
                 for i in range(batch_size):
                     self.experience_replay_pool.update(idx[i], err[i])
             return self.cur_bellman_err, intrinsic_reward
-            print ("cur bellman err %.4f, experience replay pool %s" % (float(self.cur_bellman_err)/len(self.experience_replay_pool), len(self.experience_replay_pool)))
+            print(("cur bellman err %.4f, experience replay pool %s" % (float(self.cur_bellman_err)/len(self.experience_replay_pool), len(self.experience_replay_pool))))
             
     ################################################################################
     #    Debug Functions
@@ -325,10 +325,10 @@ class AgentDQN(Agent):
         
         try:
             pickle.dump(self.experience_replay_pool, open(path, "wb"))
-            print 'saved model in %s' % (path, )
-        except Exception, e:
-            print 'Error: Writing model fails: %s' % (path, )
-            print e         
+            print('saved model in %s' % (path, ))
+        except Exception as e:
+            print('Error: Writing model fails: %s' % (path, ))
+            print(e)         
     
     def load_experience_replay_from_file(self, path):
         """ Load the experience replay pool from a file"""
@@ -342,5 +342,5 @@ class AgentDQN(Agent):
         trained_file = pickle.load(open(path, 'rb'))
         model = trained_file['model']
         
-        print "trained DQN Parameters:", json.dumps(trained_file['params'], indent=2)
+        print("trained DQN Parameters:", json.dumps(trained_file['params'], indent=2))
         return model

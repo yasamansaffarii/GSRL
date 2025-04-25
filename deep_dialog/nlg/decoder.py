@@ -42,7 +42,7 @@ class decoder:
     def batchBackward(self, dY, cache):
         caches = cache['caches']
         grads = {}
-        for i in xrange(len(caches)):
+        for i in range(len(caches)):
             single_cache = caches[i]
             local_grads = self.bwdPass(dY[i], single_cache)
             mergeDicts(grads, local_grads) # add up the gradients wrt model parameters
@@ -71,7 +71,7 @@ class decoder:
             P = e/np.sum(e, axis=1, keepdims=True)
             
             # Cross-Entropy Cross Function
-            loss_cost += -np.sum(np.log(smooth_cost + P[range(len(labels)), labels]))
+            loss_cost += -np.sum(np.log(smooth_cost + P[list(range(len(labels))), labels]))
             
             for iy,y in enumerate(labels):
                 P[iy,y] -= 1 # softmax derivatives
@@ -173,11 +173,11 @@ class decoder:
             if np.all(np.isnan(probs)): probs = np.zeros(probs.shape)
             
             log_perplex = 0
-            log_perplex += -np.sum(np.log2(smooth_cost + probs[range(len(labels)), labels]))
+            log_perplex += -np.sum(np.log2(smooth_cost + probs[list(range(len(labels))), labels]))
             log_perplex /= len(labels)
             
             loss_cost = 0
-            loss_cost += -np.sum(np.log(smooth_cost + probs[range(len(labels)), labels]))
+            loss_cost += -np.sum(np.log(smooth_cost + probs[list(range(len(labels))), labels]))
             
             perplexity += log_perplex #2**log_perplex
             total_cost += loss_cost
@@ -201,7 +201,7 @@ class decoder:
          
     """ prediction on dataset[split] """
     def predict(self, ds, split, params):
-        inverse_word_dict = {ds.data['word_dict'][k]:k for k in ds.data['word_dict'].keys()}
+        inverse_word_dict = {ds.data['word_dict'][k]:k for k in list(ds.data['word_dict'].keys())}
         for i, ele in enumerate(ds.split[split]):
             pred_ys, pred_words = self.forward(inverse_word_dict, ele, params, predict_model=True)
             
@@ -211,16 +211,16 @@ class decoder:
             if params['dia_slot_val'] == 2 or params['dia_slot_val'] == 3: 
                 sentence = self.post_process(sentence, ele['slotval'], ds.data['slot_dict'])
             
-            print 'test case', i
-            print 'real:', real_sentence
-            print 'pred:', sentence
+            print('test case', i)
+            print('real:', real_sentence)
+            print('pred:', sentence)
     
     """ post_process to fill the slot """
     def post_process(self, pred_template, slot_val_dict, slot_dict):
         sentence = pred_template
         suffix = "_PLACEHOLDER"
         
-        for slot in slot_val_dict.keys():
+        for slot in list(slot_val_dict.keys()):
             slot_vals = slot_val_dict[slot]
             slot_placeholder = slot + suffix
             if slot == 'result' or slot == 'numberofpeople': continue
@@ -228,14 +228,14 @@ class decoder:
                 tmp_sentence = sentence.replace(slot_placeholder, slot_val, 1)
                 sentence = tmp_sentence
                 
-        if 'numberofpeople' in slot_val_dict.keys():
+        if 'numberofpeople' in list(slot_val_dict.keys()):
             slot_vals = slot_val_dict['numberofpeople']
             slot_placeholder = 'numberofpeople' + suffix
             for slot_val in slot_vals:
                 tmp_sentence = sentence.replace(slot_placeholder, slot_val, 1)
                 sentence = tmp_sentence
                 
-        for slot in slot_dict.keys():
+        for slot in list(slot_dict.keys()):
             slot_placeholder = slot + suffix
             tmp_sentence = sentence.replace(slot_placeholder, '')
             sentence = tmp_sentence

@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 
-from network import *
+from .network import *
 
 use_cuda = torch.cuda.is_available()
 
@@ -68,7 +68,7 @@ class DistributionalDQN(nn.Module):
             q_next = (prob_next * self.support).sum(-1)
             a_next = torch.argmax(q_next, -1)
             #prob_next = self.target_model(s_prime).detach()
-            prob_next = prob_next[range(batch_size), a_next, :]
+            prob_next = prob_next[list(range(batch_size)), a_next, :]
             
             atom_next = r + gamma * (1 - done) * self.support
             atom_next.clamp_(self.v_min, self.v_max)
@@ -82,7 +82,7 @@ class DistributionalDQN(nn.Module):
                 target_prob[i].index_add_(0, u[i].long(), d_m_u[i])
 
         log_prob = self.model(s, log_prob=True)
-        log_prob = log_prob[range(batch_size), a.squeeze(), :]
+        log_prob = log_prob[list(range(batch_size)), a.squeeze(), :]
         loss = -(target_prob * log_prob).sum(-1).mean()
 
         self.optimizer.zero_grad()
@@ -100,8 +100,8 @@ class DistributionalDQN(nn.Module):
 
     def save_model(self, model_path):
         torch.save(self.model.state_dict(), model_path)
-        print "model saved."
+        print("model saved.")
 
     def load_model(self, model_path):
         self.model.load_state_dict(torch.load(model_path))
-        print "model loaded."
+        print("model loaded.")
