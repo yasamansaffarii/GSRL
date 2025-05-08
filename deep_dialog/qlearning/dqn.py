@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-from torch.nn.utils import clip_grad_norm
+from torch.nn.utils import clip_grad_norm_
+
 import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
@@ -101,7 +102,7 @@ class DQN(nn.Module):
         self.update_fixed_target_network()
         self.optimizer.zero_grad()
         (loss + reg_loss).backward()
-        clip_grad_norm(self.model.parameters(), self.max_norm)
+        clip_grad_norm_(self.model.parameters(), self.max_norm)
         self.optimizer.step()
         
         self.model.sample_noise()

@@ -14,6 +14,8 @@ Command: python .\run.py --agt 9 --usr 1 --max_turn 40 --movie_kb_path .\deep_di
 '''
 
 
+import pandas as pd
+from joblib import load
 import random, copy, json
 import pickle as pickle
 import numpy as np
@@ -55,7 +57,7 @@ class AgentDQN(Agent):
         self.warm_start = params.get('warm_start', 0)
         
         self.max_turn = params['max_turn'] + 4
-        self.state_dimension = 2 * self.act_cardinality + 7 * self.slot_cardinality + 3 + self.max_turn
+        self.state_dimension = 2 * self.act_cardinality + 7 * self.slot_cardinality + 3 + self.max_turn +32
         
         if params['distributional']:
             self.dqn = DistributionalDQN(self.state_dimension, self.hidden_size, self.num_actions, params['dueling_dqn'])
@@ -196,9 +198,42 @@ class AgentDQN(Agent):
             if slot in self.slot_set:
                 kb_binary_rep[0, self.slot_set[slot]] = np.sum( kb_results_dict[slot] > 0.)
 
-        self.final_representation = np.hstack([user_act_rep, user_inform_slots_rep, user_request_slots_rep, agent_act_rep, agent_inform_slots_rep, agent_request_slots_rep, current_slots_rep, turn_rep, turn_onehot_rep, kb_binary_rep, kb_count_rep])
+        ########################################################################
+        #   Representation of Topological information
+        ########################################################################
+        contextual_rep = np.hstack([user_act_rep, user_inform_slots_rep, user_request_slots_rep, agent_act_rep, agent_inform_slots_rep, agent_request_slots_rep, current_slots_rep, turn_rep, turn_onehot_rep, kb_binary_rep, kb_count_rep])
+        Topol_rep = self.get_graph_embedding(
+                    contextual_rep=contextual_rep,
+                    kmeans_path='/content/drive/MyDrive/DialogDQN-Variants/kmeans_modelMovie_k40.joblib',
+                    grl_csv_path='/content/drive/MyDrive/DialogDQN-Variants/movie40graphsage-n32_node_embeddings_adj_recon.pt'
+                    )
+
+        self.final_representation = np.hstack([user_act_rep, user_inform_slots_rep, user_request_slots_rep, agent_act_rep, agent_inform_slots_rep, agent_request_slots_rep, current_slots_rep, turn_rep, turn_onehot_rep, kb_binary_rep, kb_count_rep, [Topol_rep]])
         return self.final_representation
-      
+
+
+    def get_graph_embedding(sekf, contextual_rep, kmeans_path, grl_csv_path):
+        # 1. Load saved KMeans model
+        kmeans = load(kmeans_path)
+
+        # 2. Predict cluster index
+        cluster_idx = kmeans.predict(contextual_rep.reshape(1, -1))[0]
+
+        # 3. Load graph embeddings
+        if grl_csv_path.endswith('.csv'):       
+            embeddings_df = pd.read_csv(grl_csv_path)            
+            # Rename the first unnamed column to 'id' and ensure it's integer
+            embeddings_df.rename(columns={embeddings_df.columns[0]: 'id'}, inplace=True)
+            embeddings_df['id'] = embeddings_df['id'].astype(int)
+            # Find the embedding vector for the given cluster index
+            node_embedding = embeddings_df[embeddings_df['id'] == cluster_idx].iloc[:, 1:].values.squeeze()
+        else:
+            embeddings_tensor = torch.load(grl_csv_path)  # .pt or .pth
+            embeddings_np = embeddings_tensor.detach().cpu().numpy()
+            node_embedding = embeddings_np[cluster_idx]
+            
+        return node_embedding
+
     def run_policy(self, representation):
         """ epsilon-greedy policy """
         

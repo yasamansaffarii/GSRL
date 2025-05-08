@@ -4,15 +4,15 @@ Created on May 17, 2016
 @author: xiul, t-zalipt
 """
 
-import json, copy
+import json, copy, csv
 from . import StateTracker
 from deep_dialog import dialog_config
 
 
 class DialogManager:
     """ A dialog manager to mediate the interaction between an agent and a customer """
-    
-    def __init__(self, agent, user, act_set, slot_set, movie_dictionary):
+
+    def __init__(self, agent, user, act_set, slot_set, movie_dictionary, success_rate_threshold=0.8):
         self.agent = agent
         self.user = user
         self.act_set = act_set
@@ -22,6 +22,10 @@ class DialogManager:
         self.reward = 0
         self.instrinsic_reward = 0
         self.episode_over = False
+        self.success_rate = 0  # Track success rate
+        self.success_rate_threshold = success_rate_threshold
+        self.experience = []  # To store (s, a, s', r, d) tuples
+
 
     def initialize_episode(self):
         """ Refresh state for new dialog """
@@ -39,6 +43,12 @@ class DialogManager:
         self.print_function(user_action = self.user_action)
             
         self.agent.initialize_episode()
+        
+    def update_success_rate(self, dialog_status):
+        """ Update success rate based on dialog status """
+        if dialog_status == dialog_config.SUCCESS_DIALOG:
+            self.success_rate += 1
+        self.success_rate /= (self.success_rate + 1)  # Normalize the success rate
 
     def next_turn(self, record_training_data=True):
         """ This function initiates each subsequent exchange between agent and user (agent first) """
@@ -101,7 +111,36 @@ class DialogManager:
             reward = 0
         return reward
     
-    
+   
+
+    def save_experience_to_csv(experience, filename="experience.csv"):
+        """Save (s, a, s', r, d) tuples to a CSV file."""
+        fieldnames = ['s', 'a', 's_prime', 'r', 'd']
+        
+        # Check if the file already exists, if not, write header
+        file_exists = False
+        try:
+            with open(filename, 'r'):
+                file_exists = True
+        except FileNotFoundError:
+            pass
+        
+        with open(filename, mode='a', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            
+            # Write header if the file doesn't exist
+            if not file_exists:
+                writer.writeheader()
+            
+            for exp in experience:
+                writer.writerow({
+                    's': exp[0],
+                    'a': exp[1],
+                    's_prime': exp[2],
+                    'r': exp[3],
+                    'd': exp[4]
+                })
+
     def print_function(self, agent_action=None, user_action=None):
         """ Print Function """
             
@@ -147,4 +186,4 @@ class DialogManager:
                   
                     #kb_results = self.state_tracker.get_current_kb_results()
                     #print ('(Number of movies in KB satisfying current constraints: %s)' % len(kb_results))
-                    
+          

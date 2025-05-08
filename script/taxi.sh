@@ -17,7 +17,7 @@ do
 	--diaact_nl_pairs ./deep_dialog/data_taxi/sim_dia_act_nl_pairs.json \
 	--dqn_hidden_size 80 \
 	--experience_replay_pool_size 10000 \
-	--episodes 200 \
+	--episodes 2000 \
 	--simulation_epoch_size 100 \
 	--write_model_dir $save_path \
 	--run_mode 3 \
@@ -29,10 +29,10 @@ do
 	--warm_start_epochs 120 \
 	--epsilon 0.00 \
 	--gamma 0.95 \
-	--dueling_dqn 0 \
+	--dueling_dqn 1 \
 	--double_dqn 0 \
 	--icm 0 \
 	--per 0 \
-	--noisy 0 \
-	--distributional 0
+	--noisy 1 \
+	--distributional 1
 done

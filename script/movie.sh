@@ -31,8 +31,8 @@ do
 	--gamma 0.95 \
 	--dueling_dqn 0 \
 	--double_dqn 0 \
-	--distributional 0 \
+	--distributional 0\
 	--icm 0 \
-	--per 0 \
+	--per 0\
 	--noisy 0
 done

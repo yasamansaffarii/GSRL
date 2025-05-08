@@ -26,7 +26,7 @@ RL: python run.py --agt 9 --usr 1 --max_turn 40 --kb_path .\deep_dialog\data\mov
 @author: xiul, t-zalipt
 """
 
-import argparse, json, copy, os
+import argparse, json, copy, os, csv
 import pickle as pickle
 
 import torch
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     
     # RL agent parameters
     parser.add_argument('--experience_replay_pool_size', dest='experience_replay_pool_size', type=int, default=1000, help='the size for experience replay')
-    parser.add_argument('--dqn_hidden_size', dest='dqn_hidden_size', type=int, default=60, help='the hidden size for DQN')
+    parser.add_argument('--dqn_hidden_size', dest='dqn_hidden_size', type=int, default=80, help='the hidden size for DQN')
     parser.add_argument('--batch_size', dest='batch_size', type=int, default=16, help='batch size')
     parser.add_argument('--gamma', dest='gamma', type=float, default=0.9, help='gamma for DQN')
     parser.add_argument('--predict_mode', dest='predict_mode', type=bool, default=False, help='predict model for DQN')
@@ -112,12 +112,12 @@ if __name__ == "__main__":
     
     parser.add_argument('--split_fold', dest='split_fold', default=5, type=int, help='the number of folders to split the user goal')
     parser.add_argument('--learning_phase', dest='learning_phase', default='all', type=str, help='train/test/all; default is all')
-    parser.add_argument('--dueling_dqn', type=int, default=1)
-    parser.add_argument('--double_dqn', type=int, default=1)
-    parser.add_argument('--icm', type=int, default=1)
-    parser.add_argument('--per', type=int, default=1)
-    parser.add_argument('--noisy', type=int, default=1)
-    parser.add_argument('--distributional', type=int, default=1)
+    parser.add_argument('--dueling_dqn', type=int, default=0)
+    parser.add_argument('--double_dqn', type=int, default=0)
+    parser.add_argument('--icm', type=int, default=0)
+    parser.add_argument('--per', type=int, default=0)
+    parser.add_argument('--noisy', type=int, default=0)
+    parser.add_argument('--distributional', type=int, default=0)
     
     args = parser.parse_args()
     params = vars(args)
@@ -410,6 +410,97 @@ def warm_start_simulation():
     print(("Current experience replay buffer size %s" % (len(agent.experience_replay_pool))))
 
 
+"""def save_replay_pool_to_csv(experience_replay_pool, csv_path, max_turns=100000):
+    # check if file exists
+    file_exists = os.path.isfile(csv_path)
+    
+    # count how many lines already written
+    if file_exists:
+        with open(csv_path, 'r') as f:
+            existing_lines = sum(1 for _ in f)
+    else:
+        existing_lines = 0
+    
+    # calculate how many new can be added
+    remaining_slots = max_turns - existing_lines
+    if remaining_slots <= 0:
+        print("CSV already has 100000 turns. No more data will be added.")
+        return
+    
+    # prepare data to write
+    rows_to_write = []
+    for experience in experience_replay_pool:
+        # assuming each experience is (state, action, reward, next_state, done)
+        state, action, reward, next_state, done = experience
+        rows_to_write.append([state, action, reward, next_state, done])
+    
+    # only add up to remaining slots
+    rows_to_write = rows_to_write[:remaining_slots]
+    
+    # write or append
+    with open(csv_path, 'a', newline='') as f:
+        writer = csv.writer(f)
+        # if new file, write header first
+        if not file_exists:
+            writer.writerow(['state', 'action', 'reward', 'next_state', 'done'])
+        writer.writerows(rows_to_write)
+    
+    print(f"Saved {len(rows_to_write)} new experiences to {csv_path}. Now total {existing_lines + len(rows_to_write)}.")
+
+"""
+
+
+
+def save_replay_pool_to_csv(experience_replay_pool, csv_path, max_turns=100000, batch_size=10000):
+    # Count current rows
+    if os.path.exists(csv_path):
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            current_rows = sum(1 for _ in f)
+    else:
+        current_rows = 0  # no file, no rows
+
+    # Check if CSV is already full
+    if current_rows >= max_turns + 1:  # +1 for header
+        print(f"CSV already has {current_rows} rows. Skipping write.")
+        return
+
+    # Check if buffer has enough samples
+    if len(experience_replay_pool) < batch_size:
+        print(f"Buffer has only {len(experience_replay_pool)} entries. Waiting until it reaches {batch_size}.")
+        return
+
+    # Calculate how many rows can still be written
+    rows_written = current_rows - 1 if current_rows > 0 else 0
+    rows_remaining = max_turns - rows_written
+
+    if rows_remaining <= 0:
+        print(f"CSV has reached {max_turns} = {len(experience_replay_pool)} rows.")
+        return
+
+    # Determine if header is needed
+    write_header = current_rows == 0
+
+    # Limit batch to remaining space
+
+
+    rows_to_write = min(batch_size, rows_remaining)
+    buffer_list = list(experience_replay_pool)
+    data_to_write = buffer_list[:rows_to_write]
+    #data_to_write = experience_replay_pool[:rows_to_write]
+
+    # Write to CSV
+    with open(csv_path, mode='a', newline='', encoding='utf-8') as csv_file:
+        writer = csv.writer(csv_file)
+        if write_header:
+            writer.writerow(['state', 'action', 'reward', 'next_state', 'done'])
+        for exp in data_to_write:
+            writer.writerow(exp)
+
+    print(f"Wrote {rows_to_write} rows to {csv_path}.")
+
+
+
+        
 #returns_f = open('returns2.log', 'w+')
 def run_episodes(count, status):
     successes = 0
@@ -459,12 +550,22 @@ def run_episodes(count, status):
             
             if simulation_res['success_rate'] >= best_res['success_rate']:
                 if simulation_res['success_rate'] >= success_rate_threshold: # threshold = 0.30
+                    #Run below for data collecting
+                    """if len(agent.experience_replay_pool)>=10000:
+                        save_replay_pool_to_csv(agent.experience_replay_pool, "replay_data_resoho.csv")"""
                     agent.reset_replay()
                     #agent.experience_replay_pool = deque(maxlen=params['experience_replay_pool_size']) 
                     agent.predict_mode = True
                     simulation_epoch(simulation_epoch_size, train=False)
                     agent.predict_mode = False
+                    
                 
+            """if best_res['success_rate'] >= 0.5 and len(agent.experience_replay_pool)>=10000 :
+                #agent.reset_replay()#agent.experience_replay_pool
+                save_replay_pool_to_csv(agent.experience_replay_pool, "replay_data_res.csv")"""
+
+
+
             if simulation_res['success_rate'] > best_res['success_rate']:
                 best_model['model'] = copy.deepcopy(agent)
                 best_res['success_rate'] = simulation_res['success_rate']
