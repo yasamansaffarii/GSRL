@@ -19,7 +19,8 @@ Contact: [y.saffari@grad.kashanu.ac.ir](mailto:saffari@kashanu.ac.ir), [salimi@k
 
 **Novelty 2**: Proposed an inductive GRL framework by applying clustering on the transition graph before learning embeddings, enabling generalization to unseen or dynamic states.
 
-Novelty 3: Designed a task-aware fine-tuning mechanism using TD error to dynamically update state embeddings based on task-specific feedback.
+**Novelty 3**: Designed a task-aware fine-tuning mechanism using TD error to dynamically update state embeddings based on task-specific feedback.
+
 ---
 
 ## 🔹 Framework Features 
