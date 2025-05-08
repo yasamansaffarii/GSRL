@@ -9,7 +9,7 @@ Contact: [y.saffari@grad.kashanu.ac.ir](mailto:saffari@kashanu.ac.ir), [salimi@k
 ---
 
 --- 
-## Requirements
+## Abstract
 
 **Motivation**: Traditional reinforcement learning (RL) methods often overlook the topological structure of state transitions, which can carry rich information critical for learning better policies, especially in episodic environments like dialogue systems.
 
