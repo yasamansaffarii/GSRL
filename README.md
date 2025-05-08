@@ -81,8 +81,9 @@ To reproduce the experiments, install the following dependencies:
      ```
 ---
 ## Hyperparameter Settings
-to change N(dimension of GRL)  =>  go to `agent_dqn.py`, line 60
-to change grl algorithm or k  =>  go to `agent_dqn.py` line 205, `Topol_rep`.
+- to change **N(dimension of GRL)**  =>  go to `agent_dqn.py`, (line 60)
+- 
+- to change **grl algorithm** or **k (Cluster)**  =>  go to `agent_dqn.py` (line 205), `Topol_rep`.
 
 --- 
 ## Citation
