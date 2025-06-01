@@ -86,6 +86,10 @@ To reproduce the experiments, install the following dependencies:
 - to change **grl algorithm** or **k (Cluster)**  =>  go to `agent_dqn.py` (line 205), `Topol_rep`.
 
 --- 
+## Running in Dynamic Mode
+
+- To run the system in **dynamic mode** for each of the graph representation learning algorithms, replace the corresponding `dqn.py` and `agent_dqn.py` files with the appropriate versions provided for that method.
+--- 
 ## Citation
 If you use this work, please cite:
 
